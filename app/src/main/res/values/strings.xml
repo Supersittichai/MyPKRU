@@ -4,6 +4,7 @@
     <string name="user">User :</string>
     <string name="new_register">New register</string>
     <string name="password">Password :</string>
+    <string name="name">Name</string>
 
 
 </resources>
