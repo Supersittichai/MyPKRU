@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //Check User And Password
             if (aBoolean) {
                 //User False
-                MyAlert myAlert = new MyAlert();
+                MyAlert myAlert = new MyAlert(this);
                 myAlert.myDialog(getResources().getString(R.string.titleUserFalse),
                         getResources().getString(R.string.messageUserFalse));
 
