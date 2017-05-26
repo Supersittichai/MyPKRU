@@ -1,5 +1,6 @@
 package pkru.thongkam.sittichai.mypkru;
 
+import android.content.Intent;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
@@ -7,8 +8,11 @@ import android.location.LocationManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -21,6 +25,7 @@ public class ServiceActivity extends AppCompatActivity {
     private LocationManager locationManager;
     private Criteria criteria;
     private double latADouble = 7.909667, lngADouble = 98.387601;
+    private String urlString = "http://swiftcodingthai.com/pkru/editLatLngPeem.php";
 
 
     @Override
@@ -38,6 +43,51 @@ public class ServiceActivity extends AppCompatActivity {
         createListView();
 
     }   //Main Method
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        Location networkLocation = myFindLocation(LocationManager.NETWORK_PROVIDER);
+        if (networkLocation != null) {
+            latADouble = networkLocation.getLatitude();
+            lngADouble = networkLocation.getLongitude();
+        }
+
+        Location gpsLocation = myFindLocation(LocationManager.GPS_PROVIDER);
+        if (gpsLocation != null) {
+            latADouble = gpsLocation.getLatitude();
+            lngADouble = gpsLocation.getLongitude();
+
+        }
+
+        Log.d("26MayV2", "Lat ==> " + latADouble);
+        Log.d("26MayV2", "Lng ==> " + lngADouble);
+
+        try {
+
+            EditLatLng editLatLng = new EditLatLng(this);
+            editLatLng.execute(loginStrings[0],
+                    Double.toString(latADouble),
+                    Double.toString(lngADouble),
+                    urlString);
+            if (Boolean.parseBoolean(editLatLng.get())) {
+                Toast.makeText(ServiceActivity.this, "Update Location Finish",
+                        Toast.LENGTH_SHORT).show();
+            }
+
+        } catch (Exception e) {
+            Log.d("26MayV2", "e resume ==> " + e.toString());
+        }
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        locationManager.removeUpdates(locationListener);
+    }
 
     public Location myFindLocation(String strProvider) {
 
@@ -80,7 +130,7 @@ public class ServiceActivity extends AppCompatActivity {
         //Get Value From Intent
         loginStrings = getIntent().getStringArrayExtra("Login");
 
-        textView.setText(loginStrings[1]);
+      //  textView.setText("test");
     }
 
     private void createListView() {
@@ -95,14 +145,18 @@ public class ServiceActivity extends AppCompatActivity {
             Log.d("26MayV1", "JSON ==> " + strJSON);
 
             JSONArray jsonArray = new JSONArray(strJSON);
-            String[] nameStrings = new String[jsonArray.length()];
-            String[] imageStrings = new String[jsonArray.length()];
+            final String[] nameStrings = new String[jsonArray.length()];
+            final String[] imageStrings = new String[jsonArray.length()];
+            final String[] latStrings = new String[jsonArray.length()];
+            final String[] lngStrings = new String[jsonArray.length()];
 
             for (int i=0;i<jsonArray.length();i++) {
 
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 nameStrings[i] = jsonObject.getString("Name");
                 imageStrings[i] = jsonObject.getString("Image");
+                latStrings[i] = jsonObject.getString("Lat");
+                lngStrings[i] = jsonObject.getString("Lng");
                 Log.d("26MayV1", "Result (" + i + ")==> " + nameStrings[i] + ":" + imageStrings[i]);
 
             }   //for
@@ -111,6 +165,25 @@ public class ServiceActivity extends AppCompatActivity {
 
             FriendAdapter friendAdapter = new FriendAdapter(this, nameStrings, imageStrings);
             listView.setAdapter(friendAdapter);
+
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                    Intent intent = new Intent(ServiceActivity.this, DetailActivity.class);
+                    intent.putExtra("Login", loginStrings);
+                    intent.putExtra("Lat", latStrings[position]);
+                    intent.putExtra("Lng", lngStrings[position]);
+                    intent.putExtra("Name", nameStrings[position]);
+                    intent.putExtra("Image", imageStrings[position]);
+                    startActivity(intent);
+
+
+
+                }
+            });
+
+
 
         } catch (Exception e) {
             Log.d("26MayV1", "e createListView ==> " + e.toString());
